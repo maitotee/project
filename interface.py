@@ -1,6 +1,8 @@
 import sys
 import dataBaseAPI as db
 import server as sr
+import random as r
+import time
 
 def startScreen():
     print("Welcome")
@@ -21,7 +23,9 @@ def startScreen():
 def login():
     username = input("Username:")
     password = input("password:")
-    status = db.logIn(username, password)
+    nonce = str(r.randint(100000, 999999))
+    timestamp = int(time.time())
+    status = db.logIn(username, password, nonce, timestamp)
     if status == False:
         print("Wrong password or username")
     else:
@@ -31,7 +35,6 @@ def login():
             print("authentication failed\nreturning to start.")
             startScreen()
         else:
-            
             print("Authentication succesful\nLogging in.....")
             mainMenu()
     return None

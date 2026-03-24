@@ -1,6 +1,6 @@
 import sqlite3
 import bcrypt
-
+import time
 
 def CheckIfUserExists(username):
     conn = sqlite3.connect("UserDataBase.db")
@@ -20,7 +20,10 @@ def newUser(username, password):
     conn.close()
     return "ok"
 
-def logIn(username, password):
+def logIn(username, password, nonce, timestamp):
+    msg = ReplayCheck(nonce, timestamp)
+    if msg == False:
+        return "Replay detected" 
     conn = sqlite3.connect("UserDataBase.db")
     c = conn.cursor()
     c.execute("SELECT passwordHash FROM users WHERE username = ?", (username,))
@@ -48,3 +51,24 @@ def TwoFactorcheck(username):
     result = c.fetchone()
     conn.close()
     return result
+
+def ReplayCheck(nonce, timestamp):
+    conn = sqlite3.connect("UserDataBase.db")
+    c = conn.cursor()
+    
+    current_time = int(time.time())
+
+    if abs(current_time - int(timestamp)) > 30:
+        conn.close()
+        return False
+
+    c.execute("SELECT 1 FROM nonces WHERE nonce = ?", (nonce,))
+    if c.fetchone():
+        conn.close()
+        return False
+
+    c.execute("INSERT INTO nonces (nonce, timestamp) VALUES (?, ?)",(nonce, timestamp))
+    conn.commit()
+    conn.close()
+
+    return True
