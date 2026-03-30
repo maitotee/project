@@ -4,6 +4,8 @@ import server as sr
 import time
 import uuid
 
+# Main menu shown at startup
+# lets the user register, log in and exit
 def startScreen():
     print("Welcome")
     while True:
@@ -17,18 +19,20 @@ def startScreen():
                 return False
             case _:
                 print("Try again")
-        
+
+# Handles the login flow including 2FA verification
 def login():
     username = input("Username:")
     password = input("password:")
+    # Generate a unique nonce and timestamp to prevent replay attacks
     nonce = str(uuid.uuid4())
     timestamp = int(time.time())
     status = db.logIn(username, password, nonce, timestamp)
-    
+
     if status == False:
         print("Wrong password or username")
         return
-    
+
     if status == "replay":
         print("Replay attack detected")
         return
@@ -49,22 +53,25 @@ def login():
         mainMenu(username)
     return None
 
+# Registers a new user with a validated password
 def register():
     username = input("Give user name: ")
-    password =  checkPass()
+    password = checkPass()
     db.newUser(username, password)
     startScreen()
     return None
-   
-def checkPass():
-    specialCaracters = ["!", "@", "#", "€", "%", "&", "$"]
-    while True:
-        password = input("Cretate password\nMust contain 12 caracters and special symbols\npassword:")
-        for char in specialCaracters:
-            if char in password and len(password)>=12:
-                return password
-        print("Password does not fill requirements!") 
 
+# Prompts the user to create a password that fills the requirements
+# min 12 characters and at least one special character
+def checkPass():
+    special_chars = set("!@#€%&$")
+    while True:
+        password = input("Create password\nMust contain 12 characters and a special symbol (!@#€%&$)\nPassword: ")
+        if len(password) >= 12 and any(c in special_chars for c in password):
+            return password
+        print("Password does not meet requirements!")
+
+# Shown users "dashboard" after successful login
 def mainMenu(username):
     print("You have reached secret files")
     while True:
@@ -77,5 +84,5 @@ def mainMenu(username):
             sys.exit()
         else:
             print("Wrong function")
-    
+
 startScreen()
